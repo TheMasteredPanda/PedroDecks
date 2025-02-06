@@ -37,6 +37,10 @@ import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 
+/**
+ *
+ * TODO: Test out error messaging queue.
+ */
 class MainActivity : ComponentActivity() {
     private val viewModel: AppViewModel by viewModels()
 
@@ -120,11 +124,10 @@ class MainActivity : ComponentActivity() {
                         try {
                             viewModel.registerEP()
                         } catch (ex: Exception) {
-                            println("Caught exception.")
                             if (ex is PedroErrorException) {
                                 ex.message?.let { viewModel.postError(ex.title, it) }
                                 return@Button
-                            } //TODO: test this out.
+                            }
 
                             throw ex
                         }
@@ -139,15 +142,15 @@ class MainActivity : ComponentActivity() {
 
                             when (ex) {
                                 is FirebaseAuthWeakPasswordException -> {
-                                    println("Weak Password.")
+                                    viewModel.postError("Weak Password", "Password is too weak.")
                                 }
 
                                 is FirebaseAuthUserCollisionException -> {
-                                    println("Email already used.")
+                                    viewModel.postError("Email Taken", "Email address has already been used.")
                                 }
 
                                 is FirebaseAuthInvalidCredentialsException -> {
-                                    println("Password doesn't meet policy.")
+                                    viewModel.postError("Password Policy Breach", "Password doesn't meet policy.")
                                 }
 
                             }
