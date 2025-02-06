@@ -1,5 +1,6 @@
 package io.themasteredpanda.pedrodeck
 
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -9,6 +10,8 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.auth
+import java.util.LinkedList
+import java.util.Queue
 
 data class ErrorMessage(var visible: Boolean = true, val title: String, val message: String)
 
@@ -20,7 +23,7 @@ class AppViewModel : ViewModel() {
     var passwordVisibility: Boolean by mutableStateOf(false)
     var fbUser: FirebaseUser? by mutableStateOf(null)
     var authResponse: AuthResponse? by mutableStateOf(null)
-    var errorMessage: ErrorMessage? by mutableStateOf(null)
+    val errorQueue: Queue<PresentableError> by mutableStateOf(LinkedList())
 
     /**
      * TODO: Handle common exceptions in both signup and registration processes.
@@ -122,12 +125,11 @@ class AppViewModel : ViewModel() {
         this.passwordVisibility = !this.passwordVisibility
     }
 
-    fun clearErrorMessage() {
-        this.errorMessage?.visible = false
-        this.errorMessage = null
+    fun postError(title: String, message: String, duration: Long = 10) {
+        this.errorQueue.add(PresentableError(title, message, duration))
     }
 
-    fun createErrorMessage(title: String, message: String) {
-        this.errorMessage = ErrorMessage(title = title, message = message)
+    fun hasErrors(): Boolean {
+        return this.errorQueue.size > 0
     }
 }

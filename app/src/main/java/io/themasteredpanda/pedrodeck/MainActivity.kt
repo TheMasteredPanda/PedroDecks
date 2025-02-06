@@ -60,9 +60,12 @@ class MainActivity : ComponentActivity() {
     @Preview(name = "Login Screen Preview")
     @Composable
     fun LoginScreen() {
-        if (viewModel.errorMessage != null) {
-            val errorMsg = viewModel.errorMessage!!
-            ErrorDropdown(viewModel, visible = errorMsg.visible, title = errorMsg.title, message = errorMsg.message)
+        if (this.viewModel.hasErrors()) {
+            val error = this.viewModel.errorQueue.peek()
+
+            if (error != null) {
+                ErrorDropdown(viewModel, error)
+            }
         }
 
         Column(
@@ -119,7 +122,7 @@ class MainActivity : ComponentActivity() {
                         } catch (ex: Exception) {
                             println("Caught exception.")
                             if (ex is PedroErrorException) {
-                                ex.message?.let { viewModel.createErrorMessage(ex.title, it) }
+                                ex.message?.let { viewModel.postError(ex.title, it) }
                                 return@Button
                             } //TODO: test this out.
 

@@ -28,12 +28,12 @@ import androidx.compose.ui.zIndex
 import kotlinx.coroutines.delay
 
 @Composable
-fun ErrorDropdown(viewModel: AppViewModel, visible: Boolean, title: String, message: String) {
+fun ErrorDropdown(viewModel: AppViewModel, error: PresentableError) {
     val localDensity = LocalDensity.current
-    val errorMsg = viewModel.errorMessage!!
+    var visible = true
 
     AnimatedVisibility(
-        visible = errorMsg.visible,
+        visible = true,
         enter = slideInVertically {
             with(localDensity) { -40.dp.roundToPx() }
         } + expandVertically(expandFrom = Alignment.Top) + fadeIn(initialAlpha = .3f),
@@ -52,12 +52,12 @@ fun ErrorDropdown(viewModel: AppViewModel, visible: Boolean, title: String, mess
             ) {
                 Column(modifier = Modifier.padding(10.dp)) {
 
-                    Text(text = title, fontSize = 20.sp)
+                    Text(text = error.title, fontSize = 20.sp)
                     Spacer(modifier = Modifier.padding(3.dp))
-                    Text(text = message, fontSize = 15.sp)
+                    Text(text = error.message, fontSize = 15.sp)
                 }
 
-                Button(onClick = { viewModel.clearErrorMessage() }, content = { Text(text = "Dismiss") }, modifier =
+                Button(onClick = { visible = false }, content = { Text(text = "Dismiss") }, modifier =
                 Modifier
                     .fillMaxWidth
                         (), shape = RoundedCornerShape(0.dp)
@@ -66,10 +66,10 @@ fun ErrorDropdown(viewModel: AppViewModel, visible: Boolean, title: String, mess
         }
     }
 
-    LaunchedEffect(errorMsg.visible) {
-        if (errorMsg.visible) {
-            delay(4000)
-            viewModel.clearErrorMessage()
-        }
+    LaunchedEffect(visible) {
+        delay(error.duration)
+        visible = false
+        viewModel.errorQueue.remove()
+
     }
 }
