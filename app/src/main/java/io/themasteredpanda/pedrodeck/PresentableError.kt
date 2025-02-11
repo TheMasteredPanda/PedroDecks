@@ -7,5 +7,5 @@ package io.themasteredpanda.pedrodeck
 data class PresentableError(
     var title: String,
     var message: String,
-    var duration: Long
+    var duration: Long = 10
 )

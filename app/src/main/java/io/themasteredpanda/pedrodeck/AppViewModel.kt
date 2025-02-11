@@ -1,6 +1,5 @@
 package io.themasteredpanda.pedrodeck
 
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -25,7 +24,6 @@ open class AppViewModel : ViewModel() {
     var fbUser: FirebaseUser? by mutableStateOf(null)
     var authResponse: AuthResponse? by mutableStateOf(null)
     var queue = mutableStateOf(LinkedList<PresentableError>())
-    var showingError: MutableState<Boolean> = mutableStateOf(false)
 
     /**
      * TODO: Handle common exceptions in both signup and registration processes.
@@ -45,12 +43,12 @@ open class AppViewModel : ViewModel() {
         }
     }
 
-    fun isShowingError(): Boolean {
-        return showingError.value
+    fun peekAtError(): PresentableError? {
+        return this.queue.value.peek()
     }
 
-    fun updateErrorShowing(showing: Boolean) {
-        showingError.value = showing
+    fun removeFirstError() {
+        this.queue.value = LinkedList(this.queue.value).apply { removeFirst() }
     }
 
     fun signedIn(): Boolean {
@@ -162,10 +160,6 @@ open class AppViewModel : ViewModel() {
         MainActivity.logger("Posting error. Title: $title Message: '$message' Duration: $duration")
         this.queue.value =
             LinkedList(queue.value).apply { add(PresentableError(title, message, duration)) }
-        MainActivity.logger("Error Queue Size: ${this.hasErrors()}")
-    }
-
-    fun hasErrors(): Boolean {
-        return this.queue.value.size > 0
+        MainActivity.logger("Error Queue Size: ${this.queue.value.size}")
     }
 }

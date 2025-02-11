@@ -79,17 +79,23 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     fun LoginScreen(viewModel: AppViewModel) {
-        if (viewModel.hasErrors()) {
-            logger("Errors found in queue.")
-            val error = viewModel.queue.value.peek()
-            logger("Peeked at first error.")
-            if (error != null && !viewModel.isShowingError()) {
-                logger("Error is not null and no errors are currently showing.")
-                ErrorDropdown(viewModel, error)
-                viewModel.updateErrorShowing(true)
-            }
+        ErrorDropdown(viewModel)
+
+        /** if (viewModel.hasErrors()) {
+        logger("Errors found in queue.")
+        if (!viewModel.isShowingError()) {
+        val error = viewModel.getFirstError()
+        if (error == null) {
+        logger("Tried to fetch PresentableError instance, returned null.")
+        } else {
+        logger("Creating ErrorDropdown.")
+        ErrorDropdown(viewModel, error)
+        viewModel.updateErrorShowing(true)
+        }
+        }
         }
 
+        ErrorDropdown(viewModel, PresentableError("test", "test", 10))**/
 
         Column(
             modifier = Modifier
