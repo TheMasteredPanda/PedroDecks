@@ -13,3 +13,5 @@
 .externalNativeBuild
 .cxx
 local.properties
+/firebase_emulators
+google-services.json

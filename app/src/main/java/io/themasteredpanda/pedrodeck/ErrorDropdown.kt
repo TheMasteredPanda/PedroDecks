@@ -18,6 +18,10 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,14 +30,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import kotlinx.coroutines.delay
+import java.util.LinkedList
 
 @Composable
 fun ErrorDropdown(viewModel: AppViewModel, error: PresentableError) {
     val localDensity = LocalDensity.current
-    var visible = true
-
+    var visible by remember { mutableStateOf(true) }
+    MainActivity.logger("Composing ErrorDropdown.")
+    Text("Testinginfgsdignsd.")
     AnimatedVisibility(
-        visible = true,
+        visible = visible,
         enter = slideInVertically {
             with(localDensity) { -40.dp.roundToPx() }
         } + expandVertically(expandFrom = Alignment.Top) + fadeIn(initialAlpha = .3f),
@@ -57,19 +63,29 @@ fun ErrorDropdown(viewModel: AppViewModel, error: PresentableError) {
                     Text(text = error.message, fontSize = 15.sp)
                 }
 
-                Button(onClick = { visible = false }, content = { Text(text = "Dismiss") }, modifier =
-                Modifier
-                    .fillMaxWidth
-                        (), shape = RoundedCornerShape(0.dp)
+                Button(
+                    onClick = { visible = false },
+                    content = { Text(text = "Dismiss") },
+                    modifier =
+                    Modifier
+                        .fillMaxWidth
+                            (),
+                    shape = RoundedCornerShape(0.dp)
                 )
             }
         }
     }
 
-    LaunchedEffect(visible) {
-        delay(error.duration)
-        visible = false
-        viewModel.errorQueue.remove()
-
+    MainActivity.logger("Attempting to LaunchEffect. Error Title: ${error.title} / Error Description: ${error.message}")
+    LaunchedEffect(Unit) {
+        run {
+            MainActivity.logger("LaunchEffect ErrorDropdown. Duration ${error.duration}")
+            delay(error.duration)
+            MainActivity.logger("Duration elapsed.")
+            visible = false
+            viewModel.queue.value = LinkedList(viewModel.queue.value).apply { removeFirst() }
+            MainActivity.logger("Deleted error from queue. Error: ${error.title} / ${error.message}")
+            viewModel.updateErrorShowing(false)
+        }
     }
 }

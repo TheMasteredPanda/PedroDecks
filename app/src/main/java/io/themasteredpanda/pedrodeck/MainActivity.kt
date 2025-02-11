@@ -29,7 +29,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
@@ -47,11 +46,13 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+
         setContent {
             MaterialTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                Scaffold(modifier = Modifier.fillMaxSize()) {
                     if (!viewModel.signedIn()) {
-                        LoginScreen()
+                        LoginScreen(viewModel)
                     } else {
                         DecksScreen()
                     }
@@ -61,16 +62,34 @@ class MainActivity : ComponentActivity() {
     }
 
 
-    @Preview(name = "Login Screen Preview")
-    @Composable
-    fun LoginScreen() {
-        if (this.viewModel.hasErrors()) {
-            val error = this.viewModel.errorQueue.peek()
+    /**
+     * Used primarily for debugging.
+     */
+    companion object {
+        fun logger(message: String) {
 
-            if (error != null) {
-                ErrorDropdown(viewModel, error)
+            val logg = true
+            if (logg) {
+                println(
+                    "[LOGGER] $message"
+                )
             }
         }
+    }
+
+    @Composable
+    fun LoginScreen(viewModel: AppViewModel) {
+        if (viewModel.hasErrors()) {
+            logger("Errors found in queue.")
+            val error = viewModel.queue.value.peek()
+            logger("Peeked at first error.")
+            if (error != null && !viewModel.isShowingError()) {
+                logger("Error is not null and no errors are currently showing.")
+                ErrorDropdown(viewModel, error)
+                viewModel.updateErrorShowing(true)
+            }
+        }
+
 
         Column(
             modifier = Modifier
@@ -79,6 +98,7 @@ class MainActivity : ComponentActivity() {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            Text("Testing")
 
             Text("Pedro Deck", fontSize = 25.sp, modifier = Modifier.padding(25.dp))
 
@@ -98,7 +118,8 @@ class MainActivity : ComponentActivity() {
                             Icons.Filled.Visibility
                         else Icons.Filled.VisibilityOff
 
-                        val description = if (viewModel.passwordVisibility) "Hide Password" else "Show Password"
+                        val description =
+                            if (viewModel.passwordVisibility) "Hide Password" else "Show Password"
 
                         IconButton(onClick = { viewModel.changePassVisibility() }) {
                             Icon(iconImage, description, tint = Color.Blue)
@@ -146,11 +167,17 @@ class MainActivity : ComponentActivity() {
                                 }
 
                                 is FirebaseAuthUserCollisionException -> {
-                                    viewModel.postError("Email Taken", "Email address has already been used.")
+                                    viewModel.postError(
+                                        "Email Taken",
+                                        "Email address has already been used."
+                                    )
                                 }
 
                                 is FirebaseAuthInvalidCredentialsException -> {
-                                    viewModel.postError("Password Policy Breach", "Password doesn't meet policy.")
+                                    viewModel.postError(
+                                        "Password Policy Breach",
+                                        "Password doesn't meet policy."
+                                    )
                                 }
 
                             }
@@ -172,15 +199,11 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun DecksScreen() {
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
             modifier = Modifier.fillMaxSize()
         ) {
             Button(onClick = { viewModel.signout() }, content = { Text(text = "Signout") })
         }
-    }
-
-
-    @Composable
-    fun DeckScreen() {
     }
 }
