@@ -88,7 +88,7 @@ fun ErrorDropdown(viewModel: AppViewModel) {
     MainActivity.logger("Attempting to LaunchEffect. Error Title: ${error.title} / Error Description: ${error.message}")
     LaunchedEffect(error.title) {
         MainActivity.logger("LaunchEffect ErrorDropdown. Duration ${error.duration}")
-        delay(10000)
+        delay(error.duration * 1000)
         MainActivity.logger("Duration elapsed.")
         visible = false
         viewModel.removeFirstError()

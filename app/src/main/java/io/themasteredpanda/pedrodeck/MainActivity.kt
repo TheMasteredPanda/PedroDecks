@@ -35,11 +35,13 @@ import androidx.compose.ui.zIndex
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseAuthWeakPasswordException
+import dagger.hilt.android.AndroidEntryPoint
 
 /**
  *
  * TODO: Test out error messaging queue.
  */
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private val viewModel: AppViewModel by viewModels()
 
@@ -81,22 +83,6 @@ class MainActivity : ComponentActivity() {
     fun LoginScreen(viewModel: AppViewModel) {
         ErrorDropdown(viewModel)
 
-        /** if (viewModel.hasErrors()) {
-        logger("Errors found in queue.")
-        if (!viewModel.isShowingError()) {
-        val error = viewModel.getFirstError()
-        if (error == null) {
-        logger("Tried to fetch PresentableError instance, returned null.")
-        } else {
-        logger("Creating ErrorDropdown.")
-        ErrorDropdown(viewModel, error)
-        viewModel.updateErrorShowing(true)
-        }
-        }
-        }
-
-        ErrorDropdown(viewModel, PresentableError("test", "test", 10))**/
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -104,8 +90,6 @@ class MainActivity : ComponentActivity() {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text("Testing")
-
             Text("Pedro Deck", fontSize = 25.sp, modifier = Modifier.padding(25.dp))
 
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {

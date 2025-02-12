@@ -5,38 +5,34 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.google.firebase.Firebase
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.auth.FirebaseUser
-import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.firestore
+import dagger.hilt.android.lifecycle.HiltViewModel
+import io.themasteredpanda.pedrodeck.repository.AuthRepository
+import kotlinx.coroutines.flow.MutableStateFlow
 import java.util.LinkedList
+import javax.inject.Inject
 
-data class ErrorMessage(var visible: Boolean = true, val title: String, val message: String)
-
-open class AppViewModel : ViewModel() {
-    var auth: FirebaseAuth = Firebase.auth
+@HiltViewModel
+class AppViewModel @Inject constructor(private val auth: AuthRepository) : ViewModel() {
     var store: FirebaseFirestore = Firebase.firestore
     var emailValue: String by mutableStateOf("")
     var passwordValue: String by mutableStateOf("")
     var passwordVisibility: Boolean by mutableStateOf(false)
     var fbUser: FirebaseUser? by mutableStateOf(null)
     var authResponse: AuthResponse? by mutableStateOf(null)
-    var queue = mutableStateOf(LinkedList<PresentableError>())
+    var queue = MutableStateFlow(emptyList<PresentableError>() as LinkedList<PresentableError>)
 
     /**
-     * TODO: Handle common exceptions in both signup and registration processes.
      * TODO: Integrate google one tap signup.
      * TODO: Establish Firebase Storage for images.
      * TODO: Establish a Firestore to associate images as deck, with accounts.
-     * TODO: Handle exceptions in connectivity.
      **/
 
     init {
-        this.auth.useEmulator("10.0.2.2", 9099)
         this.store.useEmulator("10.0.2.2", 8080)
-        this.fbUser = this.auth.currentUser
+        this.fbUser = this.auth.getUser()
 
         if (this.signedIn()) {
             authResponse = AuthResponse(AuthState.COMPLETE, AuthProcessType.SIGNED_IN)
@@ -48,7 +44,7 @@ open class AppViewModel : ViewModel() {
     }
 
     fun removeFirstError() {
-        this.queue.value = LinkedList(this.queue.value).apply { removeFirst() }
+        this.queue.value = this.queue.value.drop(1) as LinkedList<PresentableError>
     }
 
     fun signedIn(): Boolean {
@@ -65,7 +61,7 @@ open class AppViewModel : ViewModel() {
     }
 
     fun registerEP() {
-        MainActivity.logger("Attempting to register a account. Email Value: ${emailValue} Password Value: ${passwordValue}")
+        MainActivity.logger("Attempting to register a account. Email Value: $emailValue Password Value: $passwordValue")
         this.authResponse = AuthResponse(AuthState.PROCESSING, AuthProcessType.REGISTERING)
 
         if (this.emailValue == "") {
@@ -77,7 +73,7 @@ open class AppViewModel : ViewModel() {
         }
 
         MainActivity.logger("Kicking creating to Firebase Auth.")
-        this.auth.createUserWithEmailAndPassword(emailValue, passwordValue)
+        this.auth.register(emailValue, passwordValue)
             .addOnSuccessListener { result ->
                 run {
                     this.fbUser = result.user
@@ -96,28 +92,6 @@ open class AppViewModel : ViewModel() {
                         "Email address is already in use by another account."
                     )
                     return@addOnFailureListener
-                    //SRP Princples not followed.
-                    MainActivity.logger("Attempting to sign in user. Email Value: $emailValue Password Value: $passwordValue")
-                    if (exception is FirebaseAuthUserCollisionException) {
-                        this.auth.signInWithEmailAndPassword(emailValue, passwordValue)
-                            .addOnCompleteListener { result1 ->
-                                run {
-                                    MainActivity.logger("Sign in successful.")
-                                    if (result1.isSuccessful) {
-                                        this.fbUser = auth.currentUser
-                                    }
-                                }
-                            }.addOnFailureListener { exception ->
-                                run {
-                                    throw (if (exception.message != null) exception.message else "")?.let {
-                                        PedroErrorException(
-                                            "Sign in failed",
-                                            it
-                                        )
-                                    }!!
-                                }
-                            }
-                    }
                 }
             }
     }
@@ -126,7 +100,7 @@ open class AppViewModel : ViewModel() {
         MainActivity.logger("Attempting to sign in user. Email value: $emailValue Password value: $passwordValue")
         this.authResponse = AuthResponse(AuthState.PROCESSING, AuthProcessType.SIGNING_IN)
 
-        this.auth.signInWithEmailAndPassword(emailValue, passwordValue)
+        this.auth.login(emailValue, passwordValue)
             .addOnSuccessListener { result ->
                 run {
                     MainActivity.logger("User signed in.")
@@ -147,7 +121,7 @@ open class AppViewModel : ViewModel() {
 
     fun signout() {
         MainActivity.logger("Signing user out.")
-        this.auth.signOut()
+        this.auth.signout()
         this.fbUser = null
     }
 
@@ -158,8 +132,11 @@ open class AppViewModel : ViewModel() {
 
     fun postError(title: String, message: String, duration: Long = 10) {
         MainActivity.logger("Posting error. Title: $title Message: '$message' Duration: $duration")
-        this.queue.value =
-            LinkedList(queue.value).apply { add(PresentableError(title, message, duration)) }
+        this.queue.value = (this.queue.value + PresentableError(
+            title,
+            message,
+            duration
+        )) as LinkedList<PresentableError>
         MainActivity.logger("Error Queue Size: ${this.queue.value.size}")
     }
 }
